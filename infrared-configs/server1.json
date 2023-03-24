@@ -1,0 +1,4 @@
+{
+    "domainName": "server1.localhost",
+    "proxyTo": "mine:25565"
+}

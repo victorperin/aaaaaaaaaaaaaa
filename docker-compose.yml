@@ -1,0 +1,100 @@
+version: "3.3"
+
+services:
+
+
+
+  traefik:
+    image: "traefik"
+    command:
+      # - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+
+
+      # automatic redirection
+      # - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      # - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      # - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      # automatic redirection
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - ./traefik/letsencrypt:/letsencrypt
+    deploy:
+      labels:
+        - "traefik.enable=true"
+
+        # https certificate to all routes
+        - "traefik.http.routers.generic.entrypoints=websecure"
+        - "traefik.http.routers.generic.tls=true"
+        # https certificate to all routes
+
+        
+        
+        # Let's Enctrypt
+        # Uncoment this when testing
+        # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory" 
+        - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
+        - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=web"
+        - "--certificatesresolvers.myresolver.acme.email=postmaster@example.com"
+        - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+        # Let's Enctrypt
+
+
+
+        # Traefik Dashboard
+        - "traefik.https.routers.traefik.rule=Host(`traefik.soberanacraft.net`)"
+        - "traefik.https.routers.traefik.tls=true"
+        - "traefik.https.services.traefik.loadbalancer.server.port=8080"
+        # Traefik Dashboard
+
+
+
+  soberanacraft:
+    image: tutum/hello-world # MUDAAAAR
+    environment:
+      CONFIG_PATH: "/foudase/config.toml" # MUDAAAAR
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.helloWorld.rule=Host(`api.soberanacraft.net`)"
+      - "traefik.http.routers.helloWorld.tls=true"
+      # - traefik.http.services.helloWorld.loadbalancer.server.port=49684
+
+
+
+
+
+
+
+  mineReverseProxy:
+    image: haveachin/infrared:latest
+    volumes:
+      - ./infrared-configs/:/configs
+    ports:
+      - 25565:25565/tcp
+
+  # Exemplos de servers
+  mine:
+    image: itzg/minecraft-server
+    container_name: mine1
+    environment:
+      EULA: "TRUE"
+      VERSION: "1.19.3"
+      ONLINE_MODE: "FALSE"
+    volumes:
+      - "./mine-data:/data"
+
+  mineEventos:
+    image: itzg/minecraft-server
+    environment:
+      EULA: "TRUE"
+      VERSION: "1.19.3"
+      ONLINE_MODE: "FALSE"
+    volumes:
+      - "./mine-eventos-data:/data"

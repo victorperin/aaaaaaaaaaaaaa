@@ -1,0 +1,4 @@
+{
+    "domainName": "server-eventos.localhost",
+    "proxyTo": "mineEventos:25565"
+}
